@@ -6,8 +6,10 @@ var app = new Vue({
         ros: null,
         logs: [],
         loading: false,
-        rosbridge_address: 'wss://i-0caa922cecd1aae95.robotigniteacademy.com/5bf9f262-b781-430d-b435-3ab1e03dd957/rosbridge/',
-        port: '7000',
+        topic: null,
+        message: null,
+        rosbridge_address: 'wss://i-05ba622091e26b0f4.robotigniteacademy.com/df41ea44-a7a2-4552-b9e4-986a78dd41b8/rosbridge/',
+        port: '9090',
         // dragging data
         dragging: false,
         x: 'no',
@@ -31,6 +33,18 @@ var app = new Vue({
         viewer: null,
         tfClient: null,
         urdfClient: null,
+        // Map stuff
+        mapViewer: null,
+        mapGridClient: null,
+        interval: null,
+        //Action stuff
+        goal: null,
+        action: {
+            goal: { position: {x: 0, y: 0, z: 0} },
+            feedback: { position: 0, state: 'idle' },
+            result: { success: false },
+            status: { status: 0, text: '' },
+        }
 
     },
     // helper methods to connect to ROS
@@ -44,6 +58,9 @@ var app = new Vue({
                 this.logs.unshift((new Date()).toTimeString() + ' - Connected!')
                 this.connected = true
                 this.loading = false
+                this.setup3DViewer()
+                this.setCamera()
+                this.setupMap()
             })
             this.ros.on('error', (error) => {
                 this.logs.unshift((new Date()).toTimeString() + ` - Error: ${error}`)
@@ -52,6 +69,8 @@ var app = new Vue({
                 this.logs.unshift((new Date()).toTimeString() + ' - Disconnected!')
                 this.connected = false
                 this.loading = false
+                this.unsetViewers()
+               
             })
         },
         publish: function() {
@@ -69,14 +88,50 @@ var app = new Vue({
 
         disconnect: function() {
             this.ros.close()
+            this.goal = null
+        },
+
+        setCamera: function() {
+            let without_wss = this.rosbridge_address.split('wss://')[1]
+            console.log(without_wss)
+            let domain = without_wss.split('/')[0] + '/' + without_wss.split('/')[1]
+            console.log(domain)
+            let host = domain + '/cameras'
+            let viewer = new MJPEGCANVAS.Viewer({
+                divID: 'divCamera',
+                host: host,
+                width: 320,
+                height: 320,
+                topic: '/camera/image_raw',
+                ssl: true,
+            })
+        },
+
+        setupMap() {
+            this.mapViewer = new ROS2D.Viewer({
+                divID: 'map',
+                width: 420,
+                height: 320
+            })
+        // Setup the map client.
+            this.mapGridClient = new ROS2D.OccupancyGridClient({
+                ros: this.ros,
+                rootObject: this.mapViewer.scene,
+                continuous: true,
+            })
+        // Scale the canvas to fit to the map
+            this.mapGridClient.on('change', () => {
+                this.mapViewer.scaleToDimensions(this.mapGridClient.currentGrid.width, this.mapGridClient.currentGrid.height);
+                this.mapViewer.shift(this.mapGridClient.currentGrid.pose.position.x, this.mapGridClient.currentGrid.pose.position.y)
+            })
         },
 
         setup3DViewer() {
             this.viewer = new ROS3D.Viewer({
                 background: '#cccccc',
                 divID: 'div3DViewer',
-                width: 40,
-                height: 30,
+                width: 320,
+                height: 320,
                 antialias: true,
                 fixedFrame: 'odom'
             })
@@ -99,7 +154,7 @@ var app = new Vue({
             // Setup the URDF client.
             this.urdfClient = new ROS3D.UrdfClient({
                 ros: this.ros,
-                param: '/robot_description',
+                param: 'robot_description',
                 tfClient: this.tfClient,
                 // We use "path: location.origin + location.pathname"
                 // instead of "path: window.location.href" to remove query params,
@@ -109,8 +164,11 @@ var app = new Vue({
                 loader: ROS3D.COLLADA_LOADER_2
             })
         },
-        unset3DViewer() {
+        unsetViewers() {
             document.getElementById('div3DViewer').innerHTML = ''
+            document.getElementById('divCamera').innerHTML = ''
+            document.getElementById('map').innerHTML = ''
+
         },
 
         sendCommand: function() {
@@ -172,13 +230,48 @@ var app = new Vue({
             this.joystick.vertical = 0
             this.joystick.horizontal = 0
         },
+        sendGoal: function() {
+            let actionClient = new ROSLIB.ActionClient({
+                ros : this.ros,
+                serverName : '/tortoisebot_as',
+                actionName : 'course_web_dev_ros/action/WaypointActionAction'
+            })
+
+            this.goal = new ROSLIB.Goal({
+                actionClient : actionClient,
+                goalMessage: {
+                    ...this.action.goal
+                }
+            })
+
+            this.goal.on('status', (status) => {
+                this.action.status = status
+            })
+
+            this.goal.on('feedback', (feedback) => {
+                this.action.feedback = feedback
+            })
+
+            this.goal.on('result', (result) => {
+                this.action.result = result
+            })
+
+            this.goal.send()
+        },
+        cancelGoal: function() {
+            this.goal.cancel()
+        },
 
 
 
 
     },
     mounted() {
-
     window.addEventListener('mouseup', this.stopDrag)
+    this.interval = setInterval(() => {
+        if (this.ros != null && this.ros.isConnected) {
+            this.ros.getNodes((data) => { }, (error) => { })
+        }
+    }, 10000)
     },
 })
