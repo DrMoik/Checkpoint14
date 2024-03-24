@@ -21,7 +21,7 @@
     <script src="./libs/ros3d.min.js"></script>
     <!-- Map -->
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/ros2d/build/ros2d.min.js"></script>
-    
+
 
     <!-- Vuejs -->
     <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.min.js"></script>
@@ -106,7 +106,7 @@
                                 <h4>Generated Map</h4>
                             </div>
                             <div class="card-body">
-                                 <div id="map"></div>
+                                <div id="map"></div>
                             </div>
                         </div>
                     </div>
@@ -128,55 +128,95 @@
                                 <h4>Commands</h4>
                             </div>
                             <div class="card-body">
-                                <div>
-                            <label>Goal</label>
-                            <div>
-                                <label>X</label>
-                                <input type="number" v-model.number="action.goal.position.x" />
-                            </div>
-                            <div>
-                                <label>Y</label>
-                                <input type="number" v-model.number="action.goal.position.y" />
-                            </div>
-                            <button :disabled="!connected || action.status.status == 1" @click="sendGoal">Start</button>
-                            <button :disabled="!connected || ![1].includes(action.status.status)" @click="cancelGoal">Cancel</button>
-                        </div>
-                        <hr />
-                        <div>
-                            <label class="text-muted">Feedback</label>
-                            <p>Position: {{ action.feedback.position }}</p>
-                            <p>State: {{ action.feedback.state }}</p>
-                        </div>
-                        <hr />
-                        <div>
-                            <label class="text-muted">Result</label>
-                            <p>Succeeded: {{ action.result.success }}</p>
-                        </div>
-                        <hr />
-                        <div>
-                            <label class="text-muted">Status</label>
-                            <p>{{ action.status.text }}</p>
-                        </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="row justify-content-center">
-                    <div class="col-3.5">
-                        <div class="card mt-2">
-                            <div class="card-header">
-                                <h2>Joystick</h2>
-                            </div>
-                            <div class="card-body">
-                                <div id="dragstartzone" @mousedown="startDrag" @mousemove="doDrag"></div>
-                                <div id="dragCircle" :style="dragCircleStyle"></div>
+                                <!-- 3x3 Matrix of Buttons -->
+                                <!-- Row 1 -->
+                                <div class="row mb-2">
+                                    <div class="col-4">
+                                        <button class="btn btn-primary w-100"
+                                            :disabled="!connected || action.status.status == 1"
+                                            @click="sendPreconfiguredGoal(1)">Goal 1</button>
+                                    </div>
+                                    <div class="col-4">
+                                        <button class="btn btn-primary w-100"
+                                            :disabled="!connected || action.status.status == 1"
+                                            @click="sendPreconfiguredGoal(2)">Goal 2</button>
+                                    </div>
+                                    <div class="col-4">
+                                        <button class="btn btn-primary w-100"
+                                            :disabled="!connected || action.status.status == 1"
+                                            @click="sendPreconfiguredGoal(3)">Goal 3</button>
+                                    </div>
+                                </div>
+                                <!-- Row 2 -->
+                                <div class="row mb-2">
+                                    <div class="col-4">
+                                        <button class="btn btn-primary w-100"
+                                            :disabled="!connected || action.status.status == 1"
+                                            @click="sendPreconfiguredGoal(4)">Goal 4</button>
+                                    </div>
+                                    <div class="col-4">
+                                        <button class="btn btn-primary w-100"
+                                            :disabled="!connected || action.status.status == 1"
+                                            @click="sendPreconfiguredGoal(5)">Goal 5</button>
+                                    </div>
+                                    <div class="col-4">
+                                        <button class="btn btn-primary w-100"
+                                            :disabled="!connected || action.status.status == 1"
+                                            @click="sendPreconfiguredGoal(6)">Goal 6</button>
+                                    </div>
+                                </div>
+                                <!-- Row 3 -->
+                                <div class="row mb-2">
+                                    <div class="col-4">
+                                        <button class="btn btn-primary w-100"
+                                            :disabled="!connected || action.status.status == 1"
+                                            @click="sendPreconfiguredGoal(7)">Goal 7</button>
+                                    </div>
+                                    <div class="col-4">
+                                        <button class="btn btn-primary w-100"
+                                            :disabled="!connected || action.status.status == 1"
+                                            @click="sendPreconfiguredGoal(8)">Goal 8</button>
+                                    </div>
+                                    <div class="col-4">
+                                        <button class="btn btn-primary w-100"
+                                            :disabled="!connected || action.status.status == 1"
+                                            @click="sendPreconfiguredGoal(9)">Goal 9</button>
+                                    </div>
+                                </div>
+                                <!-- Cancel Button -->
+                                <div class="row">
+                                    <div class="col-12">
+                                        <button class="btn btn-danger w-100"
+                                            :disabled="!connected || ![1].includes(action.status.status)"
+                                            @click="cancelGoal">Cancel Service</button>
+                                    </div>
+                                </div>
                             </div>
 
+
                         </div>
+
+
                     </div>
                 </div>
             </div>
         </div>
+        <div class="row justify-content-center">
+            <div class="col-3.5">
+                <div class="card mt-2">
+                    <div class="card-header">
+                        <h2>Joystick</h2>
+                    </div>
+                    <div class="card-body">
+                        <div id="dragstartzone" @mousedown="startDrag" @mousemove="doDrag"></div>
+                        <div id="dragCircle" :style="dragCircleStyle"></div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+    </div>
 
 
     </div>

@@ -8,7 +8,7 @@ var app = new Vue({
         loading: false,
         topic: null,
         message: null,
-        rosbridge_address: 'wss://i-05ba622091e26b0f4.robotigniteacademy.com/df41ea44-a7a2-4552-b9e4-986a78dd41b8/rosbridge/',
+        rosbridge_address: 'wss://i-00436614ffb7af27b.robotigniteacademy.com/eb664f6c-14ab-4c25-861a-0d305529f7a2/rosbridge/',
         port: '9090',
         // dragging data
         dragging: false,
@@ -40,12 +40,13 @@ var app = new Vue({
         //Action stuff
         goal: null,
         action: {
-            goal: { position: {x: 0, y: 0, z: 0} },
-            feedback: { position: 0, state: 'idle' },
-            result: { success: false },
-            status: { status: 0, text: '' },
-        }
-
+            goal: { position: { x: 0, y: 0, z: 0 } },
+            feedback: {  position: { x: 0, y: 0, z: 0 },state: ''},
+            result: { success:  false   },
+        status: { 
+            text: '' 
+        },
+    },
     },
     // helper methods to connect to ROS
     methods: {
@@ -121,8 +122,9 @@ var app = new Vue({
             })
         // Scale the canvas to fit to the map
             this.mapGridClient.on('change', () => {
-                this.mapViewer.scaleToDimensions(this.mapGridClient.currentGrid.width, this.mapGridClient.currentGrid.height);
-                this.mapViewer.shift(this.mapGridClient.currentGrid.pose.position.x, this.mapGridClient.currentGrid.pose.position.y)
+                const zoomFactor = 1/4;
+                this.mapViewer.scaleToDimensions(this.mapGridClient.currentGrid.width*zoomFactor, this.mapGridClient.currentGrid.height*zoomFactor);
+                this.mapViewer.shift(this.mapGridClient.currentGrid.pose.position.x*zoomFactor, this.mapGridClient.currentGrid.pose.position.y*zoomFactor)
             })
         },
 
@@ -249,18 +251,49 @@ var app = new Vue({
             })
 
             this.goal.on('feedback', (feedback) => {
-                this.action.feedback = feedback
-            })
+                this.action.feedback.position = { ...feedback.feedback.position };
+                this.action.feedback.state = feedback.feedback.state;
+            });
 
-            this.goal.on('result', (result) => {
-                this.action.result = result
-            })
 
+        this.goal.on('result', (result) => {
+            this.action.result.success = result.result.success;
+            this.$forceUpdate(); // Force Vue to re-render the component
+             });
             this.goal.send()
         },
         cancelGoal: function() {
             this.goal.cancel()
         },
+
+        
+        sendPreconfiguredGoal(goalNumber) {
+        // Define preconfigured goals
+        const goals = {
+            1: {x: 0.65, y: -0.43},
+            2: {x: 0.65, y: 0.43},
+            3: {x: 0.25, y: 0.43},
+            4: {x: 0.25, y: 0.0},
+            5: {x: -0.11, y: 0.0},
+            6: {x: -0.11, y: -0.43},
+            7: {x: -0.43, y: -0.43},
+            8: {x: -0.11, y: 0.43},
+            9: {x: -0.53, y: 0.43},
+        };
+
+        // Get the selected goal based on button pressed
+        const selectedGoal = goals[goalNumber];
+
+        // Assuming you have a method or setup to send a goal
+        // For example, updating the goal part of your data and then calling sendGoal
+        this.action.goal.position.x = selectedGoal.x;
+        this.action.goal.position.y = selectedGoal.y;
+
+        // Now, call the method to send the goal
+        // This could be your existing method to send a goal to the action server
+        this.sendGoal();
+    },
+
 
 
 
